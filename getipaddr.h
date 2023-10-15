@@ -1,5 +1,5 @@
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef GETIPADDR_H
+#define GETIPADDR_H
 
 // checking if the machine is a Windows Machine
 #if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(__BORLANDC__)
@@ -29,13 +29,13 @@
 
 #endif
 
-#define ERROR -1
+#define MY_ERROR -1
 
 #ifdef OS_WINDOWS
 static void getIPAddressForWin(char *ipaddress)
 {
     char hostName[256];
-    if (gethostname(hostName, sizeof(hostName)) == ERROR)
+    if (gethostname(hostName, sizeof(hostName)) == MY_ERROR)
         clienterror("gethostname() Error");
 
     struct addrinfo *result = nullptr;
@@ -46,27 +46,34 @@ static void getIPAddressForWin(char *ipaddress)
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
-    if (getaddrinfo(hostName, nullptr, &hints, &result) == ERROR)
+    if (getaddrinfo(hostName, nullptr, &hints, &result) == MY_ERROR)
         clienterror("getaddrinfo() Error");
 
     struct sockaddr_in *sockAddr = reinterpret_cast<struct sockaddr_in *>(result->ai_addr);
-    inet_ntop(AF_INET, &(sockAddr->sin_addr), ipaddress, INET_ADDRSTRLEN);
+    strcpy(ipaddress, inet_ntoa(sockAddr->sin_addr));
 }
 #else
-static void getIPAddressForLinux(char *ipaddress){
+static void getIPAddressForLinux(char *ipaddress)
+{
     struct ifaddrs *ifap, *ifa;
-    if (getifaddrs(&ifap) == 0) {
-        for (ifa = ifap; ifa != nullptr; ifa = ifa->ifa_next) {
-            if (ifa->ifa_addr != nullptr && ifa->ifa_addr->sa_family == AF_INET) {
-                struct sockaddr_in *sa = reinterpret_cast<struct sockaddr_in*>(ifa->ifa_addr);
+    if (getifaddrs(&ifap) == 0)
+    {
+        for (ifa = ifap; ifa != nullptr; ifa = ifa->ifa_next)
+        {
+            if (ifa->ifa_addr != nullptr && ifa->ifa_addr->sa_family == AF_INET)
+            {
+                struct sockaddr_in *sa = reinterpret_cast<struct sockaddr_in *>(ifa->ifa_addr);
                 inet_ntop(AF_INET, &(sa->sin_addr), ipaddress, INET_ADDRSTRLEN);
-                if (strcmp(ipaddress, "127.0.0.1") != 0) {
-                    break;  
+                if (strcmp(ipaddress, "127.0.0.1") != 0)
+                {
+                    break;
                 }
             }
         }
         freeifaddrs(ifap);
-    } else clienterror("getifaddrs() Error.");
+    }
+    else
+        clienterror("getifaddrs() Error.");
 }
 #endif
 

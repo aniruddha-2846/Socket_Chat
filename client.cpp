@@ -28,7 +28,7 @@
 #endif
 
 #define PORT 8191
-#define ERROR -1
+#define MY_ERROR -1
 #define BUFFER 1024
 
 int main()
@@ -40,8 +40,8 @@ int main()
 #ifdef OS_WINDOWS
     int ipaddr_len;
     WSADATA wsdata;
-    if (WSAStartup(MAKEWORD(2, 2), &wsdata) == ERROR)
-        clienterror("WSAStartup error :: ");
+    if (WSAStartup(MAKEWORD(2, 2), &wsdata) == MY_ERROR)
+        clienterror("WSAStartup Error :: ");
     getIPAddressForWin(ipaddress);
 #else
     socklen_t ipaddr_len;
@@ -53,19 +53,24 @@ int main()
     for_client.sin_port = htons(PORT);
     for_client.sin_addr.s_addr = inet_addr(ipaddress);
     memset(&for_client.sin_zero, 0, 8);
-
     sandesh_info("Connection establishment initiated....");
 
-    if ((clientfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == ERROR)
-        clienterror("socket() error! ");
-    if (connect(clientfd, (struct sockaddr *)&for_client, sizeof(for_client)) == ERROR)
-        clienterror("connect() error! ");
+    if ((clientfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == MY_ERROR)
+        clienterror("socket() Error.! ");
+    if (connect(clientfd, (struct sockaddr *)&for_client, sizeof(for_client)) == MY_ERROR)
+        clienterror("connect() Error! ");
 
     sandesh_info("Connection Established.");
 
-
-    inet_ntop(AF_INET, &(for_client.sin_addr), ipaddress, INET_ADDRSTRLEN);
-    std::cout << "IPaddress of Server :: "<<ipaddress<<std::endl<<std::endl;
+#ifdef OS_WINDOWS
+    char *ipaddress_of_server = inet_ntoa(for_client.sin_addr);
+    std::cout << "IPaddress of Server :: " << ipaddress_of_server << std::endl
+              << std::endl;
+#else
+    inet_ntoa(AF_INET, &(for_client.sin_addr), ipaddress, INET_ADDRSTRLEN);
+    std::cout << "IPaddress of Server :: " << ipaddress << std::endl
+              << std::endl;
+#endif
 
     char buff_to_send[BUFFER] = {
         0,
@@ -74,23 +79,22 @@ int main()
     char buff_to_recv[BUFFER] = {
         0,
     };
-  
-    if (recv(clientfd, buff_to_recv, sizeof(buff_to_recv), 0) == ERROR)
+
+    if (recv(clientfd, buff_to_recv, sizeof(buff_to_recv), 0) == MY_ERROR)
         clienterror("recv() Error :: ");
-    std:: cout<<buff_to_recv<<std:: endl;
-        sandesh_info("Begin sending messages to the server.");
-    std::cout<<std::endl;
+    std::cout << buff_to_recv << std::endl;
+    sandesh_info("Begin sending messages to the server.");
+    std::cout << std::endl;
     while (true)
     {
-        std::cout<<"To server: ";
+        std::cout << "To server: ";
         fgets(buff_to_send, 1023, stdin);
         send(clientfd, buff_to_send, sizeof(buff_to_send), 0);
 
-        std::cout<<"From Server: ";
-        if (recv(clientfd, buff_to_recv, sizeof(buff_to_recv), 0) == ERROR)
-        clienterror("recv() Error :: ");
-        std:: cout<<buff_to_recv;
-
+        std::cout << "From Server: ";
+        if (recv(clientfd, buff_to_recv, sizeof(buff_to_recv), 0) == MY_ERROR)
+            clienterror("recv() Error ::");
+        std::cout << buff_to_recv;
     }
 
     return 0;
