@@ -67,7 +67,7 @@ int main()
     std::cout << "IPaddress of Server :: " << ipaddress_of_server << std::endl
               << std::endl;
 #else
-    inet_ntoa(AF_INET, &(for_client.sin_addr), ipaddress, INET_ADDRSTRLEN);
+    inet_ntop(AF_INET, &(for_client.sin_addr), ipaddress, INET_ADDRSTRLEN);
     std::cout << "IPaddress of Server :: " << ipaddress << std::endl
               << std::endl;
 #endif
